@@ -1,6 +1,6 @@
-added a readme whoooo
-read me
-laksdjf
-lolz testing
-s
-test 2
+syssup-tictactoe
+by Andrew Hahm
+for Systems Support and Development, Section 1, 2011-2012
+
+syssup-tictactoe is a C implementation of the game tictactoe.
+Basic AI functionality is being planned; initial development will be in the "minimax" branch.
