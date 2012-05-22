@@ -15,7 +15,6 @@ int checkwin();
 int getcoord();
 int placeitem();
 void printmap();
-void minimax();
 
 int checkwin(int board[3][3]) {
     int x, y;
@@ -95,10 +94,6 @@ void printmap(int board[3][3]) {
         printf("|\n");
     }
     printf("-------------\n\n");
-}
-
-void minimax() {
-    /* AI algorithm; should be added as an option at beginning */
 }
 
 int main() {
