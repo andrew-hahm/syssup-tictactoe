@@ -15,6 +15,8 @@ int checkwin();
 int getcoord();
 int placeitem();
 void printmap();
+int computer_ai();
+int human_predictor();
 
 int checkwin(int board[3][3]) {
     int x, y;
@@ -96,18 +98,89 @@ void printmap(int board[3][3]) {
     printf("-------------\n\n");
 }
 
+int computer_ai(int board[3][3], int level, int moves) {
+    int wincheck, x, y, placesuccess, noderootmax, bestnodex, bestnodey, numvalues=0;
+    int boardcopy[3][3] = { { 0 } };
+    int values[3][9];
+
+    for (x = 0; x < 3; x++) {
+        for (y = 0; y < 3; y++) {
+            boardcopy[x][y] = board[x][y];
+        }
+    }
+
+    for (x = 0; x < 3; x++) {
+        for (y = 0; y < 3; y++) {
+            placesuccess = placeitem(1, x, y, boardcopy);
+            if (placesuccess == 1 && level == 1) {
+                /* do nothing */
+            } else if (placesuccess == 1 && level > 1) {
+                return -100;
+            } else {
+                wincheck = checkwin(boardcopy);
+                if (wincheck == 0 && level == 1) {
+                    values[1][numvalues] = -1;
+                    values[2][numvalues] = x;
+                    values[3][numvalues] = y;
+                    numvalues++;
+                } else if (wincheck == 1 && level == 1){
+                    placeitem(1, x, y, board);
+                    return 0;
+                } else if (wincheck == 0 && level > 1) {
+                    return -1;
+                } else if (wincheck == 1 && level > 1) {
+                    return 1;
+                } else if (wincheck == -1) {
+                    noderootmax = 0;
+                    if (moves != 9) {
+                        noderootmax = human_predictor(boardcopy, level + 1, moves + 1);
+                    }
+                    if (noderootmax == 0) {
+                        values[1][numvalues] = 0;
+                        values[2][numvalues] = x;
+                        values[3][numvalues] = y;
+                        numvalues++;
+                    } else if (noderootmax == 1) {
+                        placeitem(1, x, y, board);
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    bestnodex = values[2][1];
+    bestnodey = values[3][1];
+    for (x = 0; x < numvalues-1; x++) {
+        if (values[1][x] < values[1][x+1]) {
+            bestnodex = values[2][x];
+            bestnodey = values[3][x];
+        }
+    }
+    return placeitem(1, bestnodex, bestnodey, board);
+}
+
+int human_predictor(int board[3][3], int level, int moves) {
+    return 0;
+}
+
 int main() {
-    int player = 0, moves = 0, end = -1, x, y, successplace;
+    int player = 0, moves = 0, end = -1, x, y, successplace, ai;
     int board[3][3] = { { 0 } };
 
     do {
         successplace = 1;
         printf("Player %d's turn\n", player + 1);
-        do {
-            x = getcoord(0); /* input and checks bounds */
-            y = getcoord(1);
-            successplace = placeitem(player, x-1, y-1, board);
-        } while (successplace == 1);
+
+        if (player == 1) {
+            ai = computer_ai(board, 1, moves);
+        } else {
+            do {
+                x = getcoord(0); /* input and checks bounds */
+                y = getcoord(1);
+                successplace = placeitem(player, x-1, y-1, board);
+            } while (successplace == 1);
+        }
 
         printmap(board);
 
