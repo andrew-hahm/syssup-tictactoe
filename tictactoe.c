@@ -67,13 +67,17 @@ int getcoord(int xory) {
     return x;
 }
 
-int placeitem(int playernum, int x, int y, int board[3][3]) {
+int placeitem(int playernum, int x, int y, int board[3][3], int outputsuppress, int actualplacement) {
     if (board[x][y] == 0) {
         board[x][y] = playernum + 1;
-        printf("Player %d placed at [%d, %d]\n", playernum + 1, x + 1, y + 1);
+        if (actualplacement == 1) {
+            printf("Player %d placed at [%d, %d]\n", playernum + 1, x + 1, y + 1);
+        }
         return 0;
     } else {
-        printf("Something is already here!\n");
+        if (outputsuppress == 0) {
+            printf("Something is already here!\n");
+        }
         return 1;
     }
 }
@@ -99,9 +103,9 @@ void printmap(int board[3][3]) {
 }
 
 int computer_ai(int board[3][3], int level, int moves) {
-    int wincheck, x, y, placesuccess, noderootmax, bestnodex, bestnodey, numvalues=0;
+    int wincheck, x, y, placesuccess, noderootmax, bestnodex, bestnodey, bestnoderootmax, numvalues=0;
     int boardcopy[3][3] = { { 0 } };
-    int values[3][9];
+    int values[3][9] = { { 0 } };
 
     for (x = 0; x < 3; x++) {
         for (y = 0; y < 3; y++) {
@@ -111,58 +115,51 @@ int computer_ai(int board[3][3], int level, int moves) {
 
     for (x = 0; x < 3; x++) {
         for (y = 0; y < 3; y++) {
-            placesuccess = placeitem(1, x, y, boardcopy);
-            if (placesuccess == 1 && level == 1) {
-                /* do nothing */
-            } else if (placesuccess == 1 && level > 1) {
-                return -100;
+            placesuccess = placeitem(1, x, y, boardcopy, 1, 0);
+            if (placesuccess == 1 && level > 1) {
+                return 100;
             } else {
                 wincheck = checkwin(boardcopy);
-                if (wincheck == 0 && level == 1) {
-                    values[1][numvalues] = -1;
-                    values[2][numvalues] = x;
-                    values[3][numvalues] = y;
-                    numvalues++;
-                } else if (wincheck == 1 && level == 1){
-                    placeitem(1, x, y, board);
+                if (wincheck == 1 && level == 1){
+                    placeitem(1, x, y, board, 1, 1);
                     return 0;
-                } else if (wincheck == 0 && level > 1) {
-                    return -1;
                 } else if (wincheck == 1 && level > 1) {
                     return 1;
                 } else if (wincheck == -1) {
                     noderootmax = 0;
-                    if (moves != 9) {
+                    if (moves + 1 < 9) {
                         noderootmax = human_predictor(boardcopy, level + 1, moves + 1);
                     }
-                    if (noderootmax > -1) {
-                        values[1][numvalues] = noderootmax;
-                        values[2][numvalues] = x;
-                        values[3][numvalues] = y;
-                        numvalues++;
-                    } else if (noderootmax == -1) {
-                        return -1;
-                    }
+                    values[0][numvalues] = noderootmax;
+                    values[1][numvalues] = x;
+                    values[2][numvalues] = y;
+                    numvalues++;
                 }
             }
         }
     }
 
-    bestnodex = values[2][1];
-    bestnodey = values[3][1];
+    bestnoderootmax = values[0][0];
+    bestnodex = values[1][0];
+    bestnodey = values[2][0];
     for (x = 0; x < numvalues-1; x++) {
-        if (values[1][x] < values[1][x+1]) {
-            bestnodex = values[2][x+1];
-            bestnodey = values[3][x+1];
+        if (values[0][x+1] > values[0][x]) {
+            bestnoderootmax = values[0][x+1];
+            bestnodex = values[1][x+1];
+            bestnodey = values[2][x+1];
         }
     }
-    return placeitem(1, bestnodex, bestnodey, board);
+    if (level == 1) {
+        return placeitem(1, bestnodex, bestnodey, board, 1, 1);
+    } else {
+        return bestnoderootmax;
+    }
 }
 
 int human_predictor(int board[3][3], int level, int moves) {
-    int wincheck, x, y, placesuccess, noderootmax, bestnodex, bestnodey, numvalues=0;
+    int wincheck, x, y, placesuccess, noderootmin, bestnoderootmin, numvalues=0;
     int boardcopy[3][3] = { { 0 } };
-    int values[3][9];
+    int values[3][9] = { { 0 } };
 
     for (x = 0; x < 3; x++) {
         for (y = 0; y < 3; y++) {
@@ -172,43 +169,34 @@ int human_predictor(int board[3][3], int level, int moves) {
 
     for (x = 0; x < 3; x++) {
         for (y = 0; y < 3; y++) {
-            placesuccess = placeitem(0, x, y, boardcopy);
-            if (placesuccess == 1 && level == 1) {
-                /* do nothing */
-            } else if (placesuccess == 1 && level > 1) {
-                return 100;
+            placesuccess = placeitem(0, x, y, boardcopy, 1, 0);
+            if (placesuccess == 1) {
+                return -100;
             } else {
                 wincheck = checkwin(boardcopy);
                 if (wincheck == 0) {
                     return -1;
                 } else if (wincheck == -1) {
-                    noderootmax = 0;
+                    noderootmin = 0;
                     if (moves != 9) {
-                        noderootmax = computer_ai(boardcopy, level + 1, moves + 1);
+                        noderootmin = computer_ai(boardcopy, level + 1, moves + 1);
                     }
-                    if (noderootmax == 0) {
-                        values[1][numvalues] = 0;
-                        values[2][numvalues] = x;
-                        values[3][numvalues] = y;
-                        numvalues++;
-                    } else if (noderootmax == 1) {
-                        placeitem(1, x, y, board);
-                        return 0;
-                    }
+                    values[0][numvalues] = noderootmin;
+                    values[1][numvalues] = x;
+                    values[2][numvalues] = y;
+                    numvalues++;
                 }
             }
         }
     }
 
-    bestnodex = values[2][1];
-    bestnodey = values[3][1];
+    bestnoderootmin = values[0][0];
     for (x = 0; x < numvalues-1; x++) {
-        if (values[1][x+1] < values[1][x]) {
-            bestnodex = values[2][x+1];
-            bestnodey = values[3][x+1];
+        if (values[0][x+1] < values[0][x]) {
+            bestnoderootmin = values[0][x+1];
         }
     }
-    return placeitem(1, bestnodex, bestnodey, board);
+    return bestnoderootmin;
 }
 
 int main() {
@@ -225,7 +213,7 @@ int main() {
             do {
                 x = getcoord(0); /* input and checks bounds */
                 y = getcoord(1);
-                successplace = placeitem(player, x-1, y-1, board);
+                successplace = placeitem(player, x-1, y-1, board, 0, 1);
             } while (successplace == 1);
         }
 
