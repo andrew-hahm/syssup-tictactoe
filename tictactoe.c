@@ -103,22 +103,19 @@ void printmap(int board[3][3]) {
 }
 
 int computer_ai(int board[3][3], int level, int moves) {
-    int wincheck, x, y, placesuccess, noderootmax, bestnodex, bestnodey, bestnoderootmax, numvalues=0;
+    int wincheck, x, y, placesuccess, noderootmax, bestnodex, bestnodey, bestnoderootmax, numvalues=0, p, q;
     int boardcopy[3][3] = { { 0 } };
     int values[3][9] = { { 0 } };
 
     for (x = 0; x < 3; x++) {
         for (y = 0; y < 3; y++) {
-            boardcopy[x][y] = board[x][y];
-        }
-    }
-
-    for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+            for (p = 0; p < 3; p++) {
+                for (q = 0; q < 3; q++) {
+                    boardcopy[p][q] = board[p][q];
+                }
+            }
             placesuccess = placeitem(1, x, y, boardcopy, 1, 0);
-            if (placesuccess == 1 && level > 1) {
-                return 100;
-            } else {
+            if (placesuccess == 0) {
                 wincheck = checkwin(boardcopy);
                 if (wincheck == 1 && level == 1){
                     placeitem(1, x, y, board, 1, 1);
@@ -130,10 +127,15 @@ int computer_ai(int board[3][3], int level, int moves) {
                     if (moves + 1 < 9) {
                         noderootmax = human_predictor(boardcopy, level + 1, moves + 1);
                     }
-                    values[0][numvalues] = noderootmax;
-                    values[1][numvalues] = x;
-                    values[2][numvalues] = y;
-                    numvalues++;
+                    if (moves + 1 == 9) {
+                        return 0;
+                    }
+                    if (noderootmax > -100) {
+                        values[0][numvalues] = noderootmax;
+                        values[1][numvalues] = x;
+                        values[2][numvalues] = y;
+                        numvalues++;
+                    }
                 }
             }
         }
@@ -157,34 +159,36 @@ int computer_ai(int board[3][3], int level, int moves) {
 }
 
 int human_predictor(int board[3][3], int level, int moves) {
-    int wincheck, x, y, placesuccess, noderootmin, bestnoderootmin, numvalues=0;
+    int wincheck, x, y, placesuccess, noderootmin, bestnoderootmin, numvalues=0, p, q;
     int boardcopy[3][3] = { { 0 } };
     int values[3][9] = { { 0 } };
 
     for (x = 0; x < 3; x++) {
         for (y = 0; y < 3; y++) {
-            boardcopy[x][y] = board[x][y];
-        }
-    }
+            for (p = 0; p < 3; p++) {
+                for (q = 0; q < 3; q++) {
+                    boardcopy[p][q] = board[p][q];
+                }
+            }
 
-    for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
             placesuccess = placeitem(0, x, y, boardcopy, 1, 0);
-            if (placesuccess == 1) {
-                return -100;
-            } else {
+
+            if (placesuccess == 0) {
                 wincheck = checkwin(boardcopy);
                 if (wincheck == 0) {
                     return -1;
                 } else if (wincheck == -1) {
-                    noderootmin = 0;
-                    if (moves != 9) {
-                        noderootmin = computer_ai(boardcopy, level + 1, moves + 1);
+                    if (moves + 1 == 9) {
+                        return 0;
                     }
-                    values[0][numvalues] = noderootmin;
-                    values[1][numvalues] = x;
-                    values[2][numvalues] = y;
-                    numvalues++;
+                    noderootmin = 0;
+                    noderootmin = computer_ai(boardcopy, level + 1, moves + 1);
+                    if (noderootmin < 100) {
+                        values[0][numvalues] = noderootmin;
+                        values[1][numvalues] = x;
+                        values[2][numvalues] = y;
+                        numvalues++;
+                    }
                 }
             }
         }
